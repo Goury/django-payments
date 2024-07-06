@@ -8,7 +8,7 @@ from decimal import Decimal
 from functools import wraps
 
 import requests
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.utils import timezone
 from requests.exceptions import HTTPError
@@ -267,7 +267,10 @@ class PaypalProvider(BasicProvider):
     def execute_payment(self, payment, payer_id):
         post = {"payer_id": payer_id}
         links = self._get_links(payment)
-        execute_url = links["execute"]["href"]
+        try:
+            execute_url = links["execute"]["href"]
+        except KeyError:
+            return HttpResponseBadRequest()
         return self.post(payment, execute_url, data=post)
 
     def get_amount_data(self, payment, amount=None):
