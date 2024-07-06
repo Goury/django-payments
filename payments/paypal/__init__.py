@@ -248,6 +248,8 @@ class PaypalProvider(BasicProvider):
             executed_payment = self.execute_payment(payment, payer_id)
         except PaymentError:
             return redirect(failure_url)
+        except KeyError:
+            return HttpResponseBadRequest()
         self.set_response_links(payment, executed_payment)
         payment.attrs.payer_info = executed_payment["payer"]["payer_info"]
         if self._capture:
@@ -267,10 +269,7 @@ class PaypalProvider(BasicProvider):
     def execute_payment(self, payment, payer_id):
         post = {"payer_id": payer_id}
         links = self._get_links(payment)
-        try:
-            execute_url = links["execute"]["href"]
-        except KeyError:
-            return HttpResponseBadRequest()
+        execute_url = links["execute"]["href"]
         return self.post(payment, execute_url, data=post)
 
     def get_amount_data(self, payment, amount=None):
